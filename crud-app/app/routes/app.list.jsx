@@ -1,4 +1,4 @@
-import { Link, useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import { Link, useActionData, useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import {
   Card,
   Layout,
@@ -12,6 +12,7 @@ import {
   Button,
   useIndexResourceState,
   LegacyCard,
+  Pagination,
 } from "@shopify/polaris";
 import { useState } from "react";
 import db from "../db.server";
@@ -42,9 +43,8 @@ export async function action({ request }) {
     case "delete":
       await db.ticket.delete({ where: { id: Number(data.id) } });
       return redirect("/app/list");
-    case "bulkDelete":
-      console.log('length', data.ids.length);
-      deleteTicketsInBulk(data.ids);
+    case "bulk-delete":
+      deleteTicketsInBulk(data.ids.split(","));
       return redirect("/app/list");
     case "new":
     case "edit":
@@ -55,12 +55,15 @@ export async function action({ request }) {
       }
       if(action === "new") {
         await db.ticket.create({ data })
+        return data;
       } else if (action === "edit") {
+        // return redirect("/app/list/?aaaaa=true");
         return data;
       } else if (action === "update") {
         let id = data.id;
         delete data.id
         await db.ticket.update({ where: { id: Number(id) }, data });
+        return data;
       }
     default:
       return redirect("/app/list");
@@ -69,46 +72,56 @@ export async function action({ request }) {
 }
 
 export default function ListPage() {
-  const submit = useSubmit();
   const { tickets } = useLoaderData();
   const actionData = useActionData();
+  const submit = useSubmit();
   const errors = useActionData()?.errors || {};
   const {selectedResources, allResourcesSelected, handleSelectionChange} = useIndexResourceState(tickets);
-  
-  let [title, setTitle] = useState("");
-  let [content, setContent] = useState("");
-  let [isEdit, setIsEdit] = useState(0);
+  const itemsPerPage = 10;
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [isEdit, setIsEdit] = useState(0);
 
-  if(actionData && !actionData.errors) {
-    title = actionData.title;
-    content = actionData.content;
-    isEdit = actionData.id;
-  }
+  const nav = useNavigation();
+  const isSaving =
+    nav.state === "submitting" && nav.formData?.get("action") !== "delete";
+  const isDeleting =
+    nav.state === "submitting" && nav.formData?.get("action") === "delete";
 
-  function handleSave() {
+  const updateGrandparentState = (data) => {
+    setTitle(data.title);
+    setContent(data.content);
+    setIsEdit(data.id);
+  };
+
+  const handleSave = () => {
     const data = {
       title:  title || "",
       content: content || "",
       action: isEdit ? "update" : 'new'
     };
 
+    if(data.title && data.content) {
+      setTitle("");
+      setContent("");
+    }
+
     if(isEdit) {
-      data.id = parseInt(isEdit);
+      data.id = parseInt(isEdit.toString());
       setIsEdit(0);
     }
 
-    console.log('data', data);
     submit(data, { method: "post" });
-  }
+  };
 
-  function goBack() {
+  const goBack = () => {
     setIsEdit(0);
     submit({action: 'back'}, { method: "post" });
-  }
+  };
 
-  function bulkDelete() {
-    submit({action: 'bulkDelete', ids: selectedResources}, { method: "post" });
-  }
+  const bulkDelete = () => {
+    submit({action: 'bulk-delete', ids: selectedResources}, { method: "post" });
+  };
 
   const bulkActions = [
     {
@@ -148,73 +161,92 @@ export default function ListPage() {
             ] : false}
             primaryAction={{
               content: isEdit ? "Update" : "Submit",
+              loading: isSaving,
               onAction: handleSave
             }}
           />
         </Layout.Section>
-        
         {
           isEdit ? null :
           <Layout.Section>
             <Card>
               <VerticalStack gap="3">
-                {tickets.length === 0 ? (
+              {tickets.length === 0 ? (
                   <EmptyTicketState />
                 ) : (
-                  <TicketTable 
-                  tickets={tickets} 
-                  selectedResources={selectedResources}
-                  allResourcesSelected={allResourcesSelected}
-                  handleSelectionChange={handleSelectionChange}
-                  bulkActions={bulkActions} />
-                )}
+                <TicketTableWithPagination tickets={tickets} itemsPerPage={itemsPerPage} bulkActions={bulkActions} allResourcesSelected={allResourcesSelected} selectedResources={selectedResources} handleSelectionChange={handleSelectionChange} updateGrandparentState={updateGrandparentState} />
+              )}
               </VerticalStack>
             </Card>
           </Layout.Section>
         }
+
       </Layout>
     </Page>
   );
 }
 
-const TicketTable = ({ tickets, selectedResources, allResourcesSelected, handleSelectionChange, bulkActions }) => (
-  <LegacyCard>
-    <IndexTable
-      resourceName={{
-        singular: "Ticket",
-        plural: "Tickets",
-      }}
-      itemCount={tickets.length}
-      selectedItemsCount={
-        allResourcesSelected ? 'All' : selectedResources.length
-      }
-      onSelectionChange={handleSelectionChange}
-      headings={[
-        { title: "ID" },
-        { title: "Title" },
-        { title: "Content" },
-        { title: "Date created" },
-        { title: "Actions" }
-      ]}
-      bulkActions={bulkActions}
-    >
-      {tickets.map((ticket) => (
-        <TicketTableRow 
-          key={ticket.id} 
-          ticket={ticket} 
-          selectedResources={selectedResources} />
-      ))}
-    </IndexTable>
-  </LegacyCard>
-);
+function TicketTableWithPagination({ tickets, itemsPerPage, bulkActions, allResourcesSelected, selectedResources, handleSelectionChange, updateGrandparentState }) {
+  const [currentPage, setCurrentPage] = useState(1);
 
-const TicketTableRow = ({ ticket, selectedResources }) => (
+  const totalPages = Math.ceil(tickets.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedData = tickets.slice(startIndex, endIndex);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  return (
+    <LegacyCard>
+      <IndexTable
+        resourceName={{
+          singular: "Ticket",
+          plural: "Tickets",
+        }}
+        itemCount={tickets.length}
+        selectedItemsCount={
+          allResourcesSelected ? 'All' : selectedResources.length
+        }
+        onSelectionChange={handleSelectionChange}
+        headings={[
+          { title: "ID" },
+          { title: "Title" },
+          { title: "Content" },
+          { title: "Date created" },
+          { title: "Actions" }
+        ]}
+        bulkActions={bulkActions}
+      >
+        {displayedData.map((ticket) => (
+          <TicketTableRow 
+            key={ticket.id} 
+            ticket={ticket} 
+            selectedResources={selectedResources}
+            updateGrandparentState={updateGrandparentState} />
+        ))}
+      </IndexTable>
+      <div style={{ marginTop: '16px', textAlign: 'center' }}>
+        <Pagination
+          hasPrevious={currentPage > 1}
+          onPrevious={() => handlePageChange(currentPage - 1)}
+          hasNext={currentPage < totalPages}
+          onNext={() => handlePageChange(currentPage + 1)}
+        />
+      </div>
+    </LegacyCard>
+  );
+}
+
+const TicketTableRow = ({ ticket, selectedResources, updateGrandparentState }) => (
   <IndexTable.Row id={ticket.id} key={ticket.id} selected={selectedResources.includes(ticket.id)} position={ticket.id}>
     <IndexTable.Cell>
       {ticket.id}
     </IndexTable.Cell>
     <IndexTable.Cell>
-      <Link to={`tickets/${ticket.id}`}>{truncate(ticket.title)}</Link>
+      <Link to={`/app/ticket/${ticket.id}`}>{truncate(ticket.title)}</Link>
     </IndexTable.Cell>
     <IndexTable.Cell>
       {truncate(ticket.content)}
@@ -225,7 +257,7 @@ const TicketTableRow = ({ ticket, selectedResources }) => (
     <IndexTable.Cell>
       {
         <div>
-          <EditButton ticket={ticket} />
+          <EditButton ticket={ticket} updateGrandparentState={updateGrandparentState} />
           <DeleteButton ticket={ticket} />
         </div>
       }
@@ -248,20 +280,25 @@ function truncate(str, { length = 25 } = {}) {
   return str.slice(0, length) + "…";
 }
 
-function EditButton(ticket) {
+function EditButton({ticket, updateGrandparentState}) {
   const submit = useSubmit();
-  const data = {
-    id: ticket.ticket.id,
-    title: ticket.ticket.title,
-    content: ticket.ticket.content,
-    action: 'edit'
-  };
 
+
+  const handleUpdateParentState = () => {
+    const data = {
+      id: ticket.id,
+      title: ticket.title,
+      content: ticket.content,
+      action: 'edit'
+    };
+
+    updateGrandparentState(data);
+    submit(data, { method: "post" });
+  };
+  
   return (
     <span style={{color: '#bf0711', marginRight: '10px'}}>
-      <Button onClick={(e) => {
-          submit(data, { method: "post" });
-        }} monochrome outline>
+      <Button onClick={handleUpdateParentState} monochrome outline>
         Edit
       </Button>
     </span>
@@ -270,6 +307,10 @@ function EditButton(ticket) {
 
 function DeleteButton(ticket) {
   const submit = useSubmit();
+  const nav = useNavigation();
+  const isDeleting =
+    nav.state === "submitting" && nav.formData?.get("action") === "delete";
+
   const data = {
     id: ticket.ticket.id,
     action: 'delete'
@@ -277,5 +318,5 @@ function DeleteButton(ticket) {
   
   return <Button onClick={(e) => {
     submit(data, { method: "post" });
-  }} destructive>Delete</Button>;
+  }} destructive loading={isDeleting}>Delete</Button>;
 }

@@ -1,0 +1,27 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "CRUD"
+client_id = "f56c3e3be5bf9c9addc3a0b09ca6394b"
+application_url = "https://alien-excited-quantitative-protected.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://alien-excited-quantitative-protected.trycloudflare.com/auth/callback",
+  "https://alien-excited-quantitative-protected.trycloudflare.com/auth/shopify/callback",
+  "https://alien-excited-quantitative-protected.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "quickstart-ec2fa0c0.myshopify.com"
