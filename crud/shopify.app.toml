@@ -1,0 +1,27 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "Ticket Management"
+client_id = "7a2e72a6b852a501eede8edc23c528f5"
+application_url = "https://alcohol-small-upon-apparatus.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://alcohol-small-upon-apparatus.trycloudflare.com/auth/callback",
+  "https://alcohol-small-upon-apparatus.trycloudflare.com/auth/shopify/callback",
+  "https://alcohol-small-upon-apparatus.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "quickstart-c01eee29.myshopify.com"
