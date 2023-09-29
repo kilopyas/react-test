@@ -11,6 +11,7 @@ export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 export async function loader({ request }) {
   await authenticate.admin(request);
 
+  console.log('API_KEY', process.env.SHOPIFY_API_KEY);
   return json({ apiKey: process.env.SHOPIFY_API_KEY });
 }
 

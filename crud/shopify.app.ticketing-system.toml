@@ -1,0 +1,27 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "Ticketing System"
+client_id = "443440fc2cd2b0d890883aad76b12b23"
+application_url = "https://positions-solid-relatively-nil.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://positions-solid-relatively-nil.trycloudflare.com/auth/callback",
+  "https://positions-solid-relatively-nil.trycloudflare.com/auth/shopify/callback",
+  "https://positions-solid-relatively-nil.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "quickstart-fd2451de.myshopify.com"

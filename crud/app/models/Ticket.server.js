@@ -3,6 +3,9 @@ import db from "../db.server";
 export async function getTickets() {
     const tickets = await db.ticket.findMany({
         orderBy: { id: "desc" },
+        include: {
+            status: true,
+        },
     });
 
     if (tickets.length === 0) return [];
@@ -13,6 +16,18 @@ export async function getTickets() {
 }
 
 export async function getTicket(id) {
+    id = parseInt(id);
+    const ticket = await db.ticket.findFirst({ where: { id } });
+
+    if (!ticket) {
+        return null;
+    }
+
+    return buildTicket(ticket);
+}
+
+export async function getBannerStatusByTicketStatusId(id) {
+    return "pending";
     id = parseInt(id);
     const ticket = await db.ticket.findFirst({ where: { id } });
 

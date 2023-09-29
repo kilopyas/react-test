@@ -23,8 +23,17 @@ model Session {
 
 model Ticket {
   id               Int      @id @default(autoincrement())
+  status           Status   @relation(fields: [statusState], references: [state])
+  statusState      String   @unique
   title            String
   content          String
   image_url        String?
   createdAt        DateTime @default(now())
+}
+
+model Status {
+  state            String   @id
+  label            String
+  createdAt        DateTime @default(now())
+  ticket           Ticket[]
 }

@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  my-nodejs-app:
+    image: node:14  # Use an official Node.js image
+    container_name: shopify-app-container
+    network_mode: "host"
+    working_dir: /app
+    volumes:
+      - .:/app  # Map your local app directory to /app in the container
+    environment:
+      - NODE_ENV=dev  # Set your desired Node.js environment mode
+    ports:
+      - "3456:3456"  # Expose your Node.js application port (adjust as needed)
+
+    # Add any additional commands or entrypoints here
+    # command: npm start
+
+    # Add any dependencies (e.g., databases) your app requires
+    # depends_on:
+    #   - mysql
+
+    # Add any networks your app should be part of
+    # networks:
+    #   - mynetwork

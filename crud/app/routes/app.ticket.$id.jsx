@@ -2,19 +2,15 @@ import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import {
   Card,
+  Grid,
   HorizontalStack,
-  Icon,
   Layout,
+  LegacyCard,
   Page,
-  Text,
   Thumbnail,
-  VerticalStack,
 } from "@shopify/polaris";
 import { getTicket } from "~/models/Ticket.server";
 import { authenticate } from "~/shopify.server";
-import {
-  MobileBackArrowMajor
-} from '@shopify/polaris-icons';
 import { useState } from "react";
 
 export async function loader({ request, params }) {
@@ -50,51 +46,45 @@ export default function ViewPage() {
   
   console.log('test', imageUrls);
 
-  const handleBack = () => {
-    submit({action: 'back'}, { method: "post" });
-  }
-
   return (
-    <Page>
-      <ui-title-bar title={ticket.title} />
+    <Page 
+      title={ticket.title}
+      backAction={{content: ticket.title, url: '/app/list'}}
+      fullWidth
+      divider>
+      <ui-title-bar/>
       <Layout>
-
         <Layout.Section>
-          <div onClick={handleBack} style={{ marginBottom: '10px', cursor: 'pointer' }}>
-              <Icon
-                source={MobileBackArrowMajor}
-                color="base"
-              />
-          </div>
-        </Layout.Section>
-        { ticket.image_url ? 
-          <Layout.Section>
-            <Card>
-              <HorizontalStack gap="3">
-                {
-                  imageUrls.map(imageUrl => (
-                    <Thumbnail
-                      size="large"
-                      source={imageUrl}
-                      alt="Black choker necklace"
-                    />
-                  ))
+          <Grid>
+            <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 8, xl: 8}}>
+              <LegacyCard title="Content" sectioned>
+                <p>{ ticket.content }</p>
+              </LegacyCard>
+            </Grid.Cell>
+            <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 4, xl: 4}}>
+              <LegacyCard title="Attachments" sectioned>
+                { ticket.image_url ? 
+                  <Layout.Section>
+                    <Card>
+                      <HorizontalStack gap="3">
+                        {
+                          imageUrls.map(imageUrl => (
+                            <Thumbnail
+                              size="large"
+                              source={imageUrl}
+                              alt={imageUrl}
+                            />
+                          ))
+                        }
+                      </HorizontalStack>
+                    </Card>
+                  </Layout.Section>
+                    : <p>No attachments</p>
                 }
-              </HorizontalStack>
-            </Card>
-          </Layout.Section>
-            : null
-          }
-        <Layout.Section>
-          <Card>
-            <VerticalStack gap="3">
-              <Text as="p" variant="bodyMd">
-                {ticket.content}
-              </Text>
-            </VerticalStack>
-          </Card>
+              </LegacyCard>
+            </Grid.Cell>
+          </Grid>
         </Layout.Section>
-
       </Layout>
     </Page>
   );

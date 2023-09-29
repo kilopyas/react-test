@@ -2,7 +2,7 @@
 
 name = "Ticket Management"
 client_id = "7a2e72a6b852a501eede8edc23c528f5"
-application_url = "https://decent-import-strap-una.trycloudflare.com"
+application_url = "https://construct-ring-scholars-temperatures.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://decent-import-strap-una.trycloudflare.com/auth/callback",
-  "https://decent-import-strap-una.trycloudflare.com/auth/shopify/callback",
-  "https://decent-import-strap-una.trycloudflare.com/api/auth/callback"
+  "https://construct-ring-scholars-temperatures.trycloudflare.com/auth/callback",
+  "https://construct-ring-scholars-temperatures.trycloudflare.com/auth/shopify/callback",
+  "https://construct-ring-scholars-temperatures.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
